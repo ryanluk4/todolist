@@ -96,7 +96,7 @@ open <library> ;;
 
 ## Build
 
-Dune can build libraries or executables for OCaml via the `dune` file. This file creates executables for each of the examples and includes the `owl` package. Individual executables can be run in the above code block. The `dune` file also silences certain warnings. The ones commented (33 = unused openings, 35 = unused for loop indices) I ran into while testing and the rest are copied from the [Jane Street workshop](https://github.com/ryanluk4/learn-ocaml-workshop).
+Dune can build libraries or executables for OCaml via the `dune` file. This file compilation is attached to the `Lib` library. Under a `dune build` or `dune utop`, the `Lib` library can be opened. The `dune` file also silences certain warnings. The ones commented (26 = unused variables, 33 = unused openings, 35 = unused for loop indices) I ran into while testing and the rest are copied from the [Jane Street workshop](https://github.com/ryanluk4/learn-ocaml-workshop).
 
 ## To-do List
 
