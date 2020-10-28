@@ -3,8 +3,15 @@
 	ryanluk4@gmail.com
 
 	Todo library, available via utop
+	Executables can be created too
 
 *)
+
+open! Unix
+
+let t = Unix.localtime (Unix.time ())
+let (day, month, year) = (t.tm_mday, t.tm_mon, t.tm_year)
+let today = string_of_int (1900 + year) ^ string_of_int (month + 1) ^ string_of_int day 
 
 (* postgres port 5432 *)
 let connection_url = "postgresql://localhost:5432"
@@ -19,6 +26,7 @@ let pool =
 type todo_item = {
 	id: int;
 	content: string;
+	due_date: string;
 }
 (* database error type definition *)
 type error =
@@ -40,14 +48,17 @@ let or_error m =
 	with given columns
 *)
 
+(* create table if it does not exist *)
+
 let create_table_query =
 	Caqti_request.exec 
 		Caqti_type.unit 
 		{|
-			CREATE TABLE todo 
+			CREATE TABLE IF NOT EXISTS todo 
 				( 
 					id SERIAL NOT NULL PRIMARY KEY,
-					content VARCHAR
+					content VARCHAR,
+					due_date DATE NOT NULL DEFAULT CURRENT_DATE
 				)
 		|}
 
@@ -68,11 +79,13 @@ let create_table () =
 	query object tuple
 *)
 
+(* returns list of tuples with id, content, and due date *)
+
 let get_all_query =
 	Caqti_request.collect 
 		Caqti_type.unit
-		Caqti_type.(tup2 int string)
-		"SELECT id, content FROM todo"
+		Caqti_type.(tup3 int string string)
+		"SELECT id, content, due_date FROM todo ORDER BY due_date"
 
 (* function to call sql query 
 	call collection query
@@ -82,8 +95,8 @@ let get_all_query =
 
 let get_all () =
 	let get_all' (module C : Caqti_lwt.CONNECTION) = 
-		C.fold get_all_query (fun (id, content) acc -> 
-			{ id; content } :: acc
+		C.fold get_all_query (fun (id, content, due_date) rest -> 
+			{ id; content; due_date } :: rest
 		) () []
 	in
 	Caqti_lwt.Pool.use get_all' pool |> or_error
@@ -95,10 +108,12 @@ let get_all () =
 	drop table
 *)
 
+(* drops table if it exists *)
+
 let drop_query =
 	Caqti_request.exec 
 		Caqti_type.unit
-		"DROP TABLE todo"
+		"DROP TABLE IF EXISTS todo"
 
 (* function to call sql query 
 	call execution query
@@ -116,26 +131,30 @@ let drop_table () =
 	query insert string
 *)
 
+(* adds content and due date from tuple *)
+
 let add_query =
 	Caqti_request.exec 
-		Caqti_type.string 
-		"INSERT INTO todo (content) VALUES (?)"
+		Caqti_type.(tup2 string string)
+		"INSERT INTO todo (content, due_date) VALUES (?::text, ?::date)"
 
 (* function to call sql query
 	call execution query
 	push to pool
 *)
 
-let add content =
-	let add' content (module C : Caqti_lwt.CONNECTION) = C.exec add_query content
+let add content due_date =
+	let add' data (module C : Caqti_lwt.CONNECTION) = C.exec add_query data
 	in
-	Caqti_lwt.Pool.use (add' content) pool |> or_error
+	Caqti_lwt.Pool.use (add' (content, due_date)) pool |> or_error
 
 (* REMOVE *)
 
 (* execution query
 	query delete int
 *)
+
+(* removes entry based on index *)
 
 let remove_query =
 	Caqti_request.exec
@@ -158,6 +177,8 @@ let remove id =
 	unit func
 	truncate table
 *)
+
+(* wipes table *)
 
 let clear_query =
 	Caqti_request.exec

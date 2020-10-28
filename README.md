@@ -105,7 +105,7 @@ This project is a library, available to use through `utop` top-level. `todo.mli`
 - `create_table () ;;` Creates the `todo` table
 - `drop_table () ;;` Drops the `todo` table
 - `get_all () ;;` Returns list with query for all items
-- `add <item : string> ;;` Add item
+- `add <item : string> <due_date : string> ;;` Add item with due date
 - `remove <index : int> ;;` Remove item via index
 - `clear () ;;` Clear all items from table
 
@@ -118,10 +118,10 @@ open Lib ;;
 Todo.create_table () ;;
 
 (* adds first item *)
-Todo.add "my first item" ;;
+Todo.add "my first item" "2020-10-31" ;;
 
 (* adds a second item *)
-Todo.add "my second item" ;;
+Todo.add "my second item" "2020-11-01" ;;
 
 (* gets all items *)
 Todo.get_all () ;;
