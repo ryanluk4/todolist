@@ -85,7 +85,7 @@ let get_all_query =
 	Caqti_request.collect 
 		Caqti_type.unit
 		Caqti_type.(tup3 int string string)
-		"SELECT id, content, due_date FROM todo ORDER BY due_date"
+		"SELECT id, content, due_date FROM todo ORDER BY due_date, content"
 
 (* function to call sql query 
 	call collection query
